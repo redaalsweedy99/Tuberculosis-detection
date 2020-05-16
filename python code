@@ -1,0 +1,92 @@
+import cv2
+import os
+import glob
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+import imageio
+import imgaug as ia
+import imgaug.augmenters as iaa
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import matplotlib
+from skimage.feature import hog
+from sklearn.svm import SVC
+
+
+
+img_dir = "D:/tb/all-tb-data/image"
+data_path = os.path.join(img_dir,'*.png')
+files = glob.glob(data_path)
+im=[]
+dim=(224,224)
+for f1 in files:
+    img = cv2.imread(f1)
+    gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    resized = cv2.resize(gray_image , dim , interpolation = cv2.INTER_AREA)
+    im.append(resized)
+    
+    
+df= pd.read_csv('D:/tb/all-tb-data/original.csv',encoding='latin-1')
+yy = df["labels"]
+
+
+
+im=np.array(im).astype('uint8')
+
+
+ppc = 16
+hog_images = []
+hog_features = []
+for image in im:
+    fd,hog_image = hog(image, orientations=4, pixels_per_cell=(ppc,ppc),cells_per_block=(2, 2),block_norm= 'L2',visualise=True)
+    hog_images.append(hog_image)
+    hog_features.append(fd)
+    
+    
+plt.imshow(hog_images[700])
+
+np.array(hog_features).shape
+yy.shape
+
+
+x_train, x_test, y_train, y_test = train_test_split(hog_features, yy, test_size=0.2, random_state=1)
+
+
+svm=SVC(kernel='rbf')
+
+
+svm.fit(x_train,y_train)
+
+y_pred=svm.predict(x_test)
+
+print(y_pred)
+
+score=svm.score(x_test,y_test)
+
+print(score*100)
+
+
+
+from sklearn.metrics import classification_report
+target_names = ['class 0', 'class 1']
+print(classification_report(y_test, y_pred, target_names=target_names))
+
+from sklearn.metrics import multilabel_confusion_matrix
+
+cm=multilabel_confusion_matrix(y_test, y_pred)
+print(cm)
+
+from imblearn.metrics import sensitivity_specificity_support
+sensitivity_specificity_support(y_test, y_pred, average='macro')
+
+
+
+from sklearn import metrics
+from sklearn.metrics import f1_score
+cm = metrics.confusion_matrix(y_test, y_pred)
+print(cm)
+f1_score(y_test, y_pred)
