@@ -1,0 +1,7 @@
+from skimage.feature import hog
+hog_images = []
+hog_features = []
+for image in im:
+    fd,hog_image = hog(image, orientations=4, pixels_per_cell=(ppc,ppc),cells_per_block=(2, 2),block_norm= 'L2',visualise=True)
+    hog_images.append(hog_image)
+    hog_features.append(fd)
